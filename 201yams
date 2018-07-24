@@ -1,0 +1,355 @@
+#!/usr/bin/env php
+<?php 
+
+/******* ERROR gestion functions ********************************/
+  function print_usage()
+  {
+    echo "Usage\n\t   ./201yams d1 d2 d3 d4 d5 c\n\n";
+    echo "DESCIRPTION\n";
+    echo "\t   d1   value of the first die (0 if not thrown)\n";
+    echo "\t   d2   value of the first die (0 if not thrown)\n";
+    echo "\t   d3   value of the first die (0 if not thrown)\n";
+    echo "\t   d4   value of the first die (0 if not thrown)\n";
+    echo "\t   d5   value of the first die (0 if not thrown)\n";
+    echo "\t   c    expected combination\n";
+    exit(0);
+  }
+
+  function check_arg_value($value)
+  {
+    if (!is_numeric($value))
+    {
+      echo "Error, the argument [" . $value . "] must be an integer and not an alpha numerical element.\n";
+      exit(84);
+    }
+    if (($value < 0 || $value > 6))
+    {
+      echo "Error, the dices values must be choosed between 0 and 6\n";
+      exit(84);
+    }
+  }
+/******************************************************************/
+
+/***************** Utils functions ********************************/
+  
+  function factorial($n)
+  {
+    if ($n == 0 || $n == 1)
+      return 1;
+    else
+      return ($n * factorial($n - 1));
+  }
+
+  function combination($k, $n)
+  {
+    $res = factorial($n) / (factorial($k) * factorial($n - $k));
+    return ($res);
+  }
+
+  function binomiale($k, $n)
+  {
+    $res = combination($k, $n) * pow( 1/6, $k ) * pow( 5/6, $n - $k);
+    return ($res * 100);
+  }
+
+ function display_full_result($n, $x, $y, $three, $pair, $probability, $k)
+  {
+    $n = 5 - ($x + $y);
+    if ($x == 3 && $y == 2)
+    {
+       echo "chances to get a " . $three . " full of " . $pair;
+       echo ": 100.00%\n";
+    }
+    else
+    {
+       $k = 3 - $x;
+       $probability = combination($k, $n) / pow(6, $n);
+       $probability = $probability * 100;
+       echo "chances to get a " . $three . " full of " . $pair;
+       echo ": " . round($probability, 2) . "%\n";
+    }
+  }
+
+ function type_by_type($i, $tab, $mode, $current_mode, $pos)
+  {
+    if ($i != 3)
+    {
+      $mode = substr($current_mode, $pos + 1);
+      check_arg_value($mode);
+      if ($i == 0)
+      {
+        pair_method($tab, $mode);
+        exit(0);
+      }
+      if ($i == 1)
+      {
+        three_method($tab, $mode);
+        exit(0);
+      }
+      if ($i == 2)
+      {
+        four_method($tab, $mode);
+        exit(0);
+      }
+      if ($i == 4)
+      {
+        if ($mode < 5)
+        {
+            echo "Error, The argument [" . $current_mode . "] is not a valid type. Please try with the form [mode_number].\n";
+            exit(84);
+        }
+        straight_method($tab, $mode);
+        exit(0);
+       }
+       if ($i == 5)
+       {
+          yams_method($tab, $mode);
+          exit(0);
+       }
+    }
+    else
+      full_method($tab, $current_mode, $pos);
+  }
+
+  function check_method_to_do($current_mode, $type, $size, $tab)
+  {
+    $i = 0;
+    $position = strpos($current_mode, '_');
+    if ($position == false)
+    {
+      echo "Error, The argument [" . $current_mode . "] is not a valid type. Please try with the form [mode_number].\n";
+      exit(84);
+    }
+    $tmp = substr( $current_mode, 0, $position);
+    if ($tmp == "")
+    {
+      echo "Error, The argument [" . $current_mode . "] is not a valid type. Please try with the form [mode_number].\n";
+      exit(84);
+    }
+    while ( $i < $size && strpos( $type[$i], $tmp ) === false )
+      $i = $i + 1;
+    if ($i == $size)
+    {
+      echo "Error, The argument [" . $current_mode . "] is not a valid type. Please try with the form [mode_number].\n";
+      exit(84); 
+    }
+    $mode = 0;
+    type_by_type($i, $tab, $mode, $current_mode, $position);
+  }
+
+/**********************************************************************/
+
+
+/************************  All the functions game  ********************/
+
+  function pair_method($tab, $mode)
+  {
+    $nb = 0;
+    $probability = 0;
+    for ($i = 0; $i < 5; $i++)
+    {
+      if ( $tab[$i] != $mode )
+        $nb = $nb + 1;
+    }
+    $x = 5 - $nb;
+    if ( $x >= 2 )
+    {
+      echo "chances to get a " . $mode ;
+      echo " pair: 100.00%\n";
+    }
+    else
+    {
+      $end = 5 - $x;
+      $start = 2 - $x;
+      $i = $start;
+      while ($i <= $end)
+      {
+        $probability = $probability + binomiale($i, $end);
+        $i = $i + 1;
+      }
+      echo "chances to get a " . $mode ;
+      echo " pair: " . round($probability, 2) . "%\n";
+    }
+  }
+
+
+  function three_method($tab, $mode)
+  {
+    $nb = 0;
+    $probability = 0;
+    for ($i = 0; $i < 5; $i++)
+    {
+      if ( $tab[$i] != $mode)
+        $nb = $nb + 1;
+    }
+    $x = 5 - $nb;
+    if ($x >= 3)
+      echo "chances to get a " . $mode . " three-of-a-kind: 100.00%\n";
+    else
+    {
+      $end = 5 - $x;
+      $start = 3 - $x;
+      while ($start <= $end)
+      {
+        $probability = $probability + binomiale($start, $end);
+        $start = $start + 1;
+      }
+      echo "chances to get a " . $mode . " three-of-a-kind: " . round($probability, 2) . "%\n";
+    }
+  }
+
+
+  function four_method($tab, $mode)
+  {
+    $nb = 0;
+    $probability = 0;
+    $i = 0;
+
+    while ($i < 5)
+    {
+      if ($tab[$i] != $mode)
+         $nb = $nb + 1;
+      $i = $i + 1;
+    }
+    $x = 5 - $nb;
+    if ($x >= 4)
+    {
+      echo "chances to get a " . $mode;
+      echo " four-of-a-kind: 100.00%\n";
+    }
+    else
+    {
+      $end = 5 - $x;
+      $start = 4 - $x;
+      while ($start <= $end)
+      {
+        $probability = $probability + binomiale($start, $end);
+        $start++;
+      }
+      echo "chances to get a " . $mode;
+      echo " four-of-a-kind: " . round($probability, 2) . "%\n";
+    }
+  }
+
+  function straight_method($tab, $mode)
+  {
+    $small = $mode - 4;
+    $nb = 0;
+    $i =0;
+    $j = 0;
+    $z = 0;
+
+    while ($i < 5)
+    {
+      while ($j < $i)
+      {
+        if ($tab[$j] == $tab[$i])
+          $tab[$j] = 0;
+        $j = $j + 1;
+      }
+      $i = $i + 1;
+    }
+    while ($z < 5)
+    {
+      if ($tab[$z] < $small || $tab[$z] > $mode)
+         $nb = $nb + 1;
+      $z = $z + 1;
+    }
+    $x = 5 - $nb;
+    $y = 5 - $x;
+    $probability = (factorial($y) / pow( 6.00, $y)) * 100.00;
+    echo "chances to get a " . $mode;
+    echo " straight: " . round($probability, 2) . "%\n";
+  }
+
+
+  function yams_method($tab, $mode)
+  {
+    $i = 0;
+    $nb = 0;
+    $probability = 0;
+
+    while ($i < 5)
+    {
+      if ($tab[$i] != $mode)
+         $nb = $nb + 1;
+      $i = $i + 1;
+    }
+    $x = 5 - $nb;
+    if ($x == 5)
+    {
+      echo "chances to get a " . $mode;
+      echo " yams: 100.00%\n";
+    }
+    else
+    {
+      $n = 5 - $x;
+      $k = $n;
+      $probability = binomiale($k, $n);
+      echo "chances to get a " . $mode;
+      echo " yams: " . round($probability, 2) . "%\n";
+    }
+  }
+
+  function full_method($tab, $str, $position)
+  {
+    $three = 0;
+    $pair = 0;
+    $x = 0;
+    $y = 0;
+    $nb = 0;
+    $probability = 0;
+    $three = substr($str, $position + 1, 1);
+    $i = 0;
+
+    check_arg_value($three);
+    $position = strpos($str, '_', $position + 1); 
+    if ($position == false)
+    {
+      echo "Error, the last argument get an invalid type.\n";
+      exit(84);
+    }
+    $pair = substr($str, $position + 1);
+    check_arg_value($pair);
+    while ($i < 5)
+    {
+      if ($tab[$i] == $three && $x < 3)
+          $x = $x + 1;
+      else if ($tab[$i] == $pair && $y < 2)
+          $y = $y + 1;
+      else
+         $nb = $nb + 1;
+      $i = $i + 1;
+    }
+    $n = 0;
+    $k = 0;
+    display_full_result($n, $x, $y, $three, $pair, $probability, $k);
+    exit(0);
+  }
+
+/*********************************************************************/
+
+
+/**************    Principal execution of the project  **********************************/
+
+    $all_mode = array("pair_", "three_", "four_", "full_", "straight_", "yams_");
+    $tab = array();
+    $size = count($all_mode);
+    $nbr_argv = count($argv);
+    $i = 1;
+    if ($nbr_argv == 7)
+    {
+	$mode = $argv[6];
+    }
+
+    if ($nbr_argv != 7)
+      print_usage();
+    while ($i < 6)
+    {
+      check_arg_value($argv[$i]);
+      array_push($tab, $argv[$i]);
+      $i = $i + 1;
+    }
+    check_method_to_do($mode, $all_mode, $size, $tab);
+/***************************************************************************************/
+?>
